@@ -1,0 +1,1 @@
+chmod a+x ./docker-entrypoint-initdb.d/init.sh

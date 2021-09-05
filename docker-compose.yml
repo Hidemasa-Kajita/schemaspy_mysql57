@@ -1,0 +1,48 @@
+# https://teratail.com/questions/253691
+version: '3'
+
+services: 
+  nginx:
+    image: nginx
+    container_name: "nginx_for_schemaspy"
+    ports:
+      - "8001:80"
+    volumes:
+      - ./schemaspy/output:/usr/share/nginx/html:ro
+
+  mysql57:
+    container_name: mysql57
+    build: ./mysql
+    ports:
+      - 13306:3306
+    environment: 
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: app_db
+      MYSQL_USER: app_user
+      MYSQL_PASSWORD: p@ssw0rd
+      TZ: 'Asia/Tokyo'
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+      - ./mysql/config/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./mysql/init.d:/docker-entrypoint-initdb.d
+    tty: true
+
+  adminer:
+    container_name: adminer
+    hostname: adminer
+    image: adminer:latest
+    restart: always
+    ports:
+      - 8002:8080
+    depends_on:
+      - mysql57
+
+  schemaspy:
+    image: schemaspy/schemaspy
+    volumes:
+      - ./schemaspy/output:/output
+      - ./schemaspy/config:/config
+    container_name: "schemaspy"
+    command: ["-configFile", "/config/schemaspy.properties"]
+    links:
+      - mysql57
